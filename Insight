@@ -1,0 +1,26 @@
+import com.confeitaria.sistema.model.Produto;
+import com.confeitaria.sistema.repository.ProdutoRepository;
+import javax.swing.*;
+import java.awt.*;
+
+public class InsightScreen extends JFrame {
+    public InsightScreen(ProdutoRepository repository) {
+        setTitle("Insights Gerenciais"); ///Configs da tela...
+        setSize(400, 200);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+
+        ///Busca no banco via Spring Data JPA... procura no repositorio
+        Produto critico = repository.findFirstByOrderByQuantidadeEstoqueAsc();
+        
+        String mensagem;
+        if (critico != null) {
+            mensagem = "<html><h2 style='color:red;'>Atenção ao Estoque!</h2>" +
+                       "<p>Produto com menor estoque: <b>" + critico.getNome() + 
+                       "</b> — apenas <b>" + critico.getQuantidadeEstoque() + "</b> unidades.</p></html>";
+        } else {
+            mensagem = "Nenhum produto cadastrado."; ///Caso nao achar produto cadastrado 
+        }
+
+        JLabel lblInsight = new JLabel(mensagem, SwingConstants.CENTER);
+        add(lblInsight, BorderLayout.CENTER);
