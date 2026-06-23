@@ -1,0 +1,29 @@
+import com.confeitaria.sistema.repository.ProdutoRepository;
+import javax.swing.*;
+import java.awt.*;
+
+public class MenuScreen extends JFrame {
+    public MenuScreen(ProdutoRepository repository) {
+        setTitle("Menu Principal - Confeitaria"); 
+        setSize(400, 300);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new GridLayout(5, 1, 10, 10));
+        
+        JButton btnFinanceiro = new JButton("Entrada de Dinheiro"); 
+        JButton btnCaixa = new JButton("Frente de Caixa (Vendas)");
+        JButton btnEstoque = new JButton("Gerenciar Estoque / Produtos");
+        JButton btnInsight = new JButton("Visualizar Relatórios");
+        JButton btnSobre = new JButton("Sobre o Sistema");
+
+        btnFinanceiro.addActionListener(e -> new FinanceiroScreen (repository).setVisible(true));
+        btnCaixa.addActionListener(e -> new CaixaScreen (repository).setVisible(true));
+        btnEstoque.addActionListener(e -> new EstoqueScreen(repository).setVisible(true));
+        btnInsight.addActionListener(e -> new InsightScreen(repository).setVisible(true));
+        btnSobre.addActionListener(e -> JOptionPane.showMessageDialog(this, "Desenvolvido pelo Grupo 1\nFoco: Confeitaria")); 
+
+        add(btnFinanceiro);
+        add(btnCaixa);
+        add(btnEstoque);
+        add(btnInsight);
+        add(btnSobre);
