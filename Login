@@ -1,0 +1,25 @@
+import com.confeitaria.sistema.repository.ProdutoRepository;
+import javax.swing.*;
+import java.awt.*;
+
+public class LoginScreen extends JFrame {
+    private ProdutoRepository repository;
+
+    public LoginScreen(ProdutoRepository repository) {
+        this.repository = repository;
+        setTitle("Login - Sistema Confeitaria");
+        setSize(500, 200);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new GridLayout(3, 1));
+
+        JPanel panel = new JPanel();
+        panel.add(new JLabel("Feito Por: Rafael Palmiere, Matheus Zillig, Lucas Bernardes e Henry Gabriel"));
+        add(panel);
+
+        JButton btnLogin = new JButton("Entrar no Sistema");
+        btnLogin.addActionListener(e -> {
+            new MenuScreen(repository).setVisible(true);
+            this.dispose(); 
+        });
+        add(btnLogin);
