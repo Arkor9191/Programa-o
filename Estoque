@@ -1,0 +1,174 @@
+
+import com.confeitaria.sistema.model.Produto;
+import com.confeitaria.sistema.repository.ProdutoRepository;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.List;
+
+public class EstoqueScreen extends JFrame {
+    private ProdutoRepository repository;
+    
+   
+    private JTextField txtNome;
+    private JTextField txtPreco;
+    private JTextField txtQuantidade;
+    private JTable tabelaProdutos;
+    private DefaultTableModel tableModel;
+    private Produto produtoSelecionado = null; //Guarda o produto clicado para Edição/Exclusão...
+
+    public EstoqueScreen(ProdutoRepository repository) {
+        this.repository = repository;
+        
+   
+        setTitle("Gerenciamento de Estoque - Confeitaria");
+        setSize(650, 500);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); ///Fecha apenas esta janela, mantrm o sistema aberto...
+        setLayout(new BorderLayout(10, 10));
+
+
+        JPanel painelFormulario = new JPanel(new GridLayout(4, 2, 5, 5));
+        painelFormulario.setBorder(BorderFactory.createTitledBorder("Cadastro / Edição de Doces e Bolos"));
+
+        painelFormulario.add(new JLabel(" Nome do Produto:"));
+        txtNome = new JTextField();
+        painelFormulario.add(txtNome);
+
+        painelFormulario.add(new JLabel(" Preço de Venda (R$):"));
+        txtPreco = new JTextField();
+        painelFormulario.add(txtPreco);
+
+        painelFormulario.add(new JLabel(" Quantidade em Estoque:"));
+        txtQuantidade = new JTextField();
+        painelFormulario.add(txtQuantidade);
+
+        JButton btnSalvar = new JButton("Salvar / Atualizar");
+        JButton btnLimpar = new JButton("Limpar Campos");
+        painelFormulario.add(btnSalvar);
+        painelFormulario.add(btnLimpar);
+
+        add(painelFormulario, BorderLayout.NORTH);
+
+        ///Listagem de todo o estoque
+        String[] colunas = {"ID", "Nome do Doce", "Preço (R$)", "Qtd em Estoque"};
+        tableModel = new DefaultTableModel(colunas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
+        
+        tabelaProdutos = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(tabelaProdutos);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Produtos Atuais no Estoque"));
+        add(scrollPane, BorderLayout.CENTER);
+
+
+        JPanel painelAcoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnExcluir = new JButton("Excluir Produto Selecionado");
+        btnExcluir.setBackground(new Color(220, 53, 69)); // Cor vermelha para alerta
+        btnExcluir.setForeground(Color.WHITE);
+        painelAcoes.add(btnExcluir);
+        add(painelAcoes, BorderLayout.SOUTH);
+
+
+        
+        btnSalvar.addActionListener(e -> salvarProduto());
+
+      
+        btnLimpar.addActionListener(e -> limparCampos());
+
+       
+        btnExcluir.addActionListener(e -> excluirProduto());
+
+        
+        tabelaProdutos.getSelectionModel().addListSelectionListener(e -> {
+            int linhaSelecionada = tabelaProdutos.getSelectedRow();
+            if (linhaSelecionada >= 0) {
+                ///Recupera o ID
+                Long id = (Long) tableModel.getValueAt(linhaSelecionada, 0);
+                repository.findById(id).ifPresent(p -> {
+                    produtoSelecionado = p;
+                    txtNome.setText(p.getNome());
+                    txtPreco.setText(String.valueOf(p.getPreco()));
+                    txtQuantidade.setText(String.valueOf(p.getQuantidadeEstoque()));
+                });
+            }
+        });
+
+  
+        atualizarTabela();
+    }
+
+
+    private void atualizarTabela() {
+        tableModel.setRowCount(0); ///Limpa as linhas antigas...
+        List<Produto> produtos = repository.findAll();
+        for (Produto p : produtos) {
+            Object[] linha = {p.getId(), p.getNome(), p.getPreco(), p.getQuantidadeEstoque()};
+            tableModel.addRow(linha);
+        }
+    }
+
+
+    private void salvarProduto() {
+        try {
+            String nome = txtNome.getText().trim();
+            String precoTexto = txtPreco.getText().trim().replace(",", "."); // Trata vírgula decimal
+            String qtdTexto = txtQuantidade.getText().trim();
+
+            if (nome.isEmpty() || precoTexto.isEmpty() || qtdTexto.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Por favor, preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            double preco = Double.parseDouble(precoTexto);
+            int quantidade = Integer.parseInt(qtdTexto);
+
+            if (produtoSelecionado == null) {
+                // CADASTRAR NOVO
+                Produto novoProduto = new Produto(nome, preco, quantidade);
+                repository.save(novoProduto);
+                JOptionPane.showMessageDialog(this, "Doce/Bolo cadastrado com sucesso!");
+            } else {
+             
+                produtoSelecionado.setNome(nome);
+                produtoSelecionado.setPreco(preco);
+                produtoSelecionado.setQuantidadeEstoque(quantidade);
+                repository.save(produtoSelecionado);
+                JOptionPane.showMessageDialog(this, "Informações do produto atualizadas!");
+            }
+
+            limparCampos();
+            atualizarTabela();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Erro: Insira apenas números válidos em Preço e Quantidade.");
+        }
+    }
+
+
+    private void excluirProduto() {
+        if (produtoSelecionado != null) {
+            int confirmacao = JOptionPane.showConfirmDialog(this, 
+                    "Deseja realmente remover " + produtoSelecionado.getNome() + " do sistema?", 
+                    "Confirmar Exclusão", JOptionPane.YES_NO_OPTION);
+            
+            if (confirmacao == JOptionPane.YES_OPTION) {
+                repository.delete(produtoSelecionado);
+                JOptionPane.showMessageDialog(this, "Produto removido com sucesso!");
+                limparCampos();
+                atualizarTabela();
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Por favor, clique em um produto da lista para poder excluí-lo.");
+        }
+    }
+
+    private void limparCampos() {
+        txtNome.setText("");
+        txtPreco.setText("");
+        txtQuantidade.setText("");
+        tabelaProdutos.clearSelection();
+        produtoSelecionado = null; 
+    
