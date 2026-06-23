@@ -1,0 +1,16 @@
+public class InsightScreen extends JFrame {
+    public InsightScreen(ProdutoRepository repository) {
+        setTitle("Insights Gerenciais"); ///Configs da tela...
+        setSize(400, 200);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+
+       
+        Produto critico = repository.findFirstByOrderByQuantidadeEstoqueAsc();
+        
+        String mensagem;
+        if (critico != null) {
+            mensagem = "<Atenção ao Estoque!</h2>" +
+                       "<p>Produto com menor estoque: <b>" + critico.getNome() + 
+                       "</b> — apenas <b>" + critico.getQuantidadeestoque() + "</b> unidades.</p></html>";
+      
