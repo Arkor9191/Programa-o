@@ -1,0 +1,79 @@
+package com.confeitaria.sistema.view;
+
+import com.confeitaria.sistema.model.Produto;
+import com.confeitaria.sistema.repository.ProdutoRepository;
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+
+public class FinanceiroScreen extends JFrame {
+    private ProdutoRepository repository;
+
+    public FinanceiroScreen(ProdutoRepository repository) {
+        this.repository = repository;
+        setTitle("Dashboard Financeiro");
+        setSize(400, 350); // Aumentei um pouco o tamanho para caber o novo botão
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout(10, 10));
+
+        ///Busca dados no banco / Repositorio...
+        List<Produto> produtos = repository.findAll();
+        double faturamentoTotal = 0.0;
+        double valorEmEstoque = 0.0;
+
+        for (Produto p : produtos) {
+            faturamentoTotal += (p.getVendasRealizadas() * p.getPreco());
+            valorEmEstoque += (p.getQuantidadeEstoque() * p.getPreco());
+        }
+
+       ///Painel central com os valores pegos no repositorio...
+        JPanel painelValores = new JPanel(new GridLayout(2, 1, 10, 10));
+        painelValores.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel painelFaturamento = criarPainelInfo("Faturamento Bruto: R$ " + String.format("%.2f", faturamentoTotal), new Color(40, 167, 69));
+        JPanel painelEstoque = criarPainelInfo("Capital no Estoque: R$ " + String.format("%.2f", valorEmEstoque), new Color(23, 162, 184));
+
+        painelValores.add(painelFaturamento);
+        painelValores.add(painelEstoque);
+        add(painelValores, BorderLayout.CENTER);
+
+        ///Painel de baixo com o botão de resetar...
+        JPanel painelAcoes = new JPanel();
+        JButton btnReset = new JButton("Zerar Período Financeiro");
+        btnReset.setBackground(new Color(255, 193, 7)); // Cor laranja...
+        
+        btnReset.addActionListener(e -> zerarLucro());
+        
+        painelAcoes.add(btnReset);
+        add(painelAcoes, BorderLayout.SOUTH);
+    }
+
+    ///Tentei criar paineis coloridos...
+    private JPanel criarPainelInfo(String texto, Color cor) {
+        JPanel painel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        painel.setBackground(cor);
+        JLabel label = new JLabel(texto);
+        label.setForeground(Color.WHITE);
+        label.setFont(new Font("Arial", Font.BOLD, 18));
+        painel.add(label);
+        return painel;
+    }
+
+    ///Logica para conseguir zerar o lucro...
+    private void zerarLucro() {
+        int confirmacao = JOptionPane.showConfirmDialog(this, 
+                "Isso irá apagar o histórico de vendas de todos os produtos.\nTem certeza?", 
+                "Confirmar Reset", JOptionPane.YES_NO_OPTION);
+        
+        if (confirmacao == JOptionPane.YES_OPTION) {
+            List<Produto> produtos = repository.findAll();
+            for (Produto p : produtos) {
+                p.setVendasRealizadas(0);
+                repository.save(p);
+            }
+            JOptionPane.showMessageDialog(this, "Histórico financeiro zerado!");
+            this.dispose(); ///Fecha a tela automaticamente para resolver o bug de nao atualizar o valor...
+        }
+    }
+}
