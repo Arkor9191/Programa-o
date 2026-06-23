@@ -1,0 +1,87 @@
+
+
+import com.confeitaria.sistema.model.Produto;
+import com.confeitaria.sistema.repository.ProdutoRepository;
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+
+public class CaixaScreen extends JFrame {
+    private ProdutoRepository repository;
+    private JComboBox<String> comboProdutos;
+    private JTextField txtQuantidade;
+    private List<Produto> listaProdutos;
+
+    public CaixaScreen(ProdutoRepository repository) {
+        this.repository = repository;
+        setTitle("Frente de Caixa - PDV");
+        setSize(450, 250);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLayout(new GridLayout(4, 2, 10, 10));
+
+        listaProdutos = repository.findAll();
+        comboProdutos = new JComboBox<>();
+        for (Produto p : listaProdutos) {
+            comboProdutos.addItem(p.getId() + " - " + p.getNome() + " (R$ " + p.getPreco() + ")");
+        }
+
+        add(new JLabel(" Selecione o Produto:"));
+        add(comboProdutos);
+
+        add(new JLabel(" Quantidade:"));
+        txtQuantidade = new JTextField("1");
+        add(txtQuantidade);
+
+        JButton btnVender = new JButton("Finalizar Venda");
+        btnVender.setBackground(new Color(40, 167, 69)); 
+        btnVender.setForeground(Color.WHITE);
+        
+        JButton btnCancelar = new JButton("Cancelar");
+
+        add(btnCancelar);
+        add(btnVender);
+
+        btnCancelar.addActionListener(e -> this.dispose());
+        btnVender.addActionListener(e -> processarVenda());
+    }
+
+    private void processarVenda() {
+        if (comboProdutos.getSelectedIndex() == -1) {
+            JOptionPane.showMessageDialog(this, "Nenhum produto selecionado!");
+            return;
+        }
+
+        try {
+            int quantidadeDesejada = Integer.parseInt(txtQuantidade.getText().trim());
+            int indexSelecionado = comboProdutos.getSelectedIndex();
+            Produto produto = listaProdutos.get(indexSelecionado);
+
+            if (quantidadeDesejada <= 0) {
+                JOptionPane.showMessageDialog(this, "A quantidade deve ser maior que zero.");
+                return;
+            }
+
+            if (produto.getQuantidadeEstoque() < quantidadeDesejada) {
+                JOptionPane.showMessageDialog(this, "Estoque insuficiente! Restam apenas " + produto.getQuantidadeEstoque() + " unidades.");
+                return;
+            }
+
+            produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidadeDesejada);
+            produto.setVendasRealizadas(produto.getVendasRealizadas() + quantidadeDesejada);
+            repository.save(produto);
+
+            double totalPagar = produto.getPreco() * quantidadeDesejada;
+            
+            JOptionPane.showMessageDialog(this, 
+                "Venda realizada com sucesso!\n\n" +
+                "Produto: " + produto.getNome() + "\n" +
+                "Quantidade: " + quantidadeDesejada + "\n" +
+                "Total a Pagar: R$ " + String.format("%.2f", totalPagar), 
+                "Recibo", JOptionPane.INFORMATION_MESSAGE);
+
+            this.dispose();
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Digite uma quantidade válida (apenas números).");
+        
