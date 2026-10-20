@@ -1,0 +1,13 @@
+*{
+
+     
+    }
+    body{
+    /*background-image:linear-gradient(to bottom, red, blue, orange); */
+
+     background-color: rgb(124, 100, 100);
+     background-image: url( bleach-aizen-true-colors.avif);
+background-repeat: no-repeat;
+background-position: center;
+     
+    }
